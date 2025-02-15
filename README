@@ -1,0 +1,115 @@
+# Project1 - HTTP Server
+COP4635 - System & Networks 2
+Team Members: Devan Rivera, Ashley Villegas
+
+## Project Description
+This project implements a multi-threaded HTTP server in C++. The server dynamically assigns a port between 60001-60099, handles HTTP GET requests, and serves HTML and image files. 
+
+It correctly returns:
+- 200 OK for valid files.
+- 404 Not Found for missing files.
+- 400 Bad Request for unsupported HTTP methods.
+
+The server runs indefinitely until manually stopped and supports multiple clients simultaneously using multithreading.
+
+
+**Required Files**
+Make sure the following files are included in your project directory:
+
+- index.html
+- makefile
+- img.jpg
+- server.cpp
+- testPresence.html
+
+
+## Running the Program (Using WSL: Ubuntu)
+Step 1: compile the makefile
+        Command: make
+
+        ~ If there are any errors, 
+          Run: make clean and rerun make
+
+Step 2: Once compile run executable
+        Executable: ./httpServer
+
+Step 3: (Using WSL:Ubuntu) - Find the URL and implement into a browser
+        URL: http://localhost:<PORT#>
+        Example: http://localhost:6783
+
+Step 4: Test the links
+
+Step 5: Once your done, to stop the server
+        press Ctrl + C
+
+
+
+Alternative:(Using Remote Server (via SSH - Putty only))
+
+Step 1: compile the makefile
+        Command: make
+
+        ~ If there are any errors, 
+          Run: make clean and rerun make
+
+
+Step 2: Once compiled run executable
+        Executable: ./httpServer
+
+        Note: The port number will be given.
+        Example: Server running on port: 60093
+
+
+Step 3: Keep the executable running and open a new session/terminal,
+        find the directory where server.cpp is located.
+        Then follow instruction below:
+
+1. To test 200 OK the Server from PuTTY:
+   Command: curl -v http://localhost:<PORT>
+
+Expected Result (terminal):
+
+<HTML>
+<HEAD><TITLE>TEST TEXT</TITLE></HEAD>
+<BODY BGCOLOR="#99cc99" TEXT="#000000" LINK="#2020ff" VLINK="#4040cc">
+
+
+<P>
+TEST....
+<P>
+
+<H3> The server has successfully started and is sending you this page. </H3>
+
+<P>
+IMAGE LINK: If the server can successfully find and send you the image, it will show up in the subsequent page. <A HREF="testPresence.html">Click on this link for an image. </A>.
+
+<P>
+NONEXISTANT LINK <A HREF="fake.html">click here to test the non-existent link </A>.
+
+</BODY>
+</HTML>
+
+
+2. Test 404 Not Found (Missing File):
+    Command: curl -v http://localhost:<PORT>/fake.html
+
+Expected Result (terminal):
+
+< HTTP/1.1 404 Not Found
+< Content Type: text/html
+< Content Length: 22
+< Connection: close
+
+
+3. Test 400 Bad Request (Invalid HTTP Method):
+    Command: curl -X POST -v http://localhost:<PORT>/index.html
+
+Expected Result (terminal):
+
+< HTTP/1.1 400 Bad Request
+< Content Type: text/html
+< Content Length: 24
+< Connection: close
+
+Step 4: Once your done, stop the server by
+        press Ctrl + C and close all terminals
