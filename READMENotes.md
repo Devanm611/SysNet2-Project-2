@@ -2,7 +2,8 @@
 
 **Client Notes** 
 
-   *Socket Functions* 
+   **Socket Functions**
+   
 1. socket() - Creates a new socket (endpoint for communication).
 2. connect() - Connects a client socket to a server.
 3. bind() - Binds a socket to an address and port (typically used by servers, not clients).
@@ -14,25 +15,34 @@
 9. gethostname() - Retrieves the hostname of the local machine.
 10. close() - Closes an open socket.
 
-    *File I/O Functions (Data Handling)*
-11. read() - Reads data from a file descriptor (e.g., socket).
-12. write() - Writes data to a file descriptor (e.g., socket).
-13. fflush() - Flushes buffered output data.
-14. fscanf() - Reads formatted input from a stream (not commonly used in networking).
-15. sprintf() - Formats a string and stores it in a buffer.
+    **File I/O Functions (Data Handling)**
+    
+12. read() - Reads data from a file descriptor (e.g., socket).
+13. write() - Writes data to a file descriptor (e.g., socket).
+14. fflush() - Flushes buffered output data.
+15. fscanf() - Reads formatted input from a stream (not commonly used in networking).
+16. sprintf() - Formats a string and stores it in a buffer.
 
-     *Signal Handling*
-16. sigaction() - Configures signal handling, often used for handling interrupts or terminating connections gracefully.
+     **Signal Handling**
+    
+18. sigaction() - Configures signal handling, often used for handling interrupts or terminating connections gracefully.
 
-     *Big Picture*
+     **Big Picture**
+    
 1. Create a Signal Handler (if needed)
 2. Create the Client Socket and Connect to the Server
 3. Send a HTTP GET Request
 4. Recieve and Print the Response on the Client
 
-     *Don't Forget*
+     **Don't Forget**
+   
 1. Be Verbose with output
 2. Create Test cases to check the program
 3. Make a function to handle multiple requests (a loop that constantly sends requests)
 4. Implement some Error Handling
 5. If possible use HTTPS for encrypted communication
+
+
+
+
+
