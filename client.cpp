@@ -32,7 +32,7 @@ int main(int agrc, char* argv[]){
         return 1;
     }
 
-    string serverIp = argv[1];
+    string serverIP = argv[1];
     int serverPort = atoi(argv[2]);
 
     //creating the TCP socket
@@ -52,7 +52,7 @@ int main(int agrc, char* argv[]){
     tcp_server_address.sin_port = htons(port);        //Specify and pass the port number to connect - converting in right network byte order
     tcp_server_address.sin_addr.s_addr = INADDR_ANY;   //Connecting to 0.0.0.0
 
-    if(inet_pton(AF_INET, serverIp.c_str(), &tcp_server_address.sin_addr) <= 0){   //Converts the IP address from text to binary form
+    if(inet_pton(AF_INET, serverIP.c_str(), &tcp_server_address.sin_addr) <= 0){   //Converts the IP address from text to binary form
         
         cerr << "Invalid IP Address" << endl;
         close(tcp_client_socket);
@@ -74,6 +74,15 @@ int main(int agrc, char* argv[]){
 
     }
 
+    //Sends a complete HTTP request
+    ostringstream http_request;   //Creating a string stream to build the HTTP GET request
+    http_request << "GET / HTTP/1.1" << endl;   //HTTP request line
+    http_request << "Host: " << serverIP << ":" << serverPort << endl;   //Host header
+    http_request << "Connection: close" << endl;   //Closes the connection
+    string request = http_request.str();   //Convert the string stream to a string
+
+
+
     char tcp_server_response[256];
     recv(tcp_client_socket, &tcp_server_response, sizeof(tcp_server_response), 0);   // params: where (socket), what (string), how much - size of the server response, flags (0)
 
@@ -91,7 +100,7 @@ int main(int agrc, char* argv[]){
         Cloned the previous Repository to utilize the server.cpp file
         Utilized the code from the TCP Client example and built 
         upon the princple of creating a client.
-        Implemented the socket creation, connection, and began request 
+        Implemented the socket creation, connection, and request 
         of Http response.
 
         2/15/2025
