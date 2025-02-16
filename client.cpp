@@ -65,7 +65,6 @@
                  // Determine the file extension
                  if (contentType.find("jpeg") != string::npos) filename += ".jpg";
                  else if (contentType.find("png") != string::npos) filename += ".png";
-                 else if (contentType.find("gif") != string::npos) filename += ".gif";
  
                  // Open file for writing
                  imageFile.open(filename, ios::binary);

@@ -23,3 +23,4 @@ $(CLIENT_EXEC):	$(CLIENT_SRC)
 
 clean:
 	rm	-f	$(SERVER_EXEC)	$(CLIENT_EXEC)
+	find	.	-name	"NewSaveimageData.*"	-type	f	-delete
