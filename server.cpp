@@ -70,7 +70,7 @@
          string errorResponse = "<h1>404 Not Found</h1>";
          sendHTTPHeader(clientSocket, "404 Not Found", "text/html", errorResponse.size());
          send(clientSocket, errorResponse.c_str(), errorResponse.size(), 0);
-         cout << "[INFO] Response: 404 Not Found" << endl;
+         cout << "Response: 404 Not Found" << endl;
          return;
      }
  
@@ -81,7 +81,7 @@
  
      // Send HTTP headers
      sendHTTPHeader(clientSocket, "200 OK", contentType, fileSize);
-     cout << "[INFO] Response: 200 OK (" << contentType << ")" << endl;
+     cout << "Response: 200 OK (" << contentType << ")" << endl;
  
      // Send file content in chunks
      char buffer[BUFFER_SIZE];
@@ -100,14 +100,14 @@
  
      // If reading fails, close the connection
      if (bytesRead <= 0) {
-         cerr << "[ERROR] Failed to read request or client disconnected." << endl;
+         cerr << "Failed to read request or client disconnected." << endl;
          close(clientSocket);
          return;
      }
  
      // Null-terminate the request buffer
      buffer[bytesRead] = '\0';
-     cout << "\n[INFO] Received Request:\n" << buffer << endl;
+     cout << "\nReceived Request:\n" << buffer << endl;
  
      istringstream request(buffer);
      string method, path, protocol;
@@ -117,7 +117,7 @@
      if (path == "/") path = "index.html";
      else path = path.substr(1); // Remove leading "/"
  
-     cout << "[INFO] Client requested: " << path << endl;
+     cout << "Client requested: " << path << endl;
  
      // Only handle GET requests
      if (method == "GET") {
@@ -126,12 +126,12 @@
          string errorResponse = "<h1>400 Bad Request</h1>";
          sendHTTPHeader(clientSocket, "400 Bad Request", "text/html", errorResponse.size());
          send(clientSocket, errorResponse.c_str(), errorResponse.size(), 0);
-         cout << "[INFO] Response: 400 Bad Request" << endl;
+         cout << "Response: 400 Bad Request" << endl;
      }
  
      // Close client connection
      close(clientSocket);
-     cout << "[INFO] Connection closed with client." << endl;
+     cout << "Connection closed with client." << endl;
  }
  
  // Function to generate a random port number
@@ -173,10 +173,10 @@
  
      // Display server startup information
      string ipAddress = getServerIPAddress();
-     cout << "[INFO] Server running on IP: " << ipAddress << endl;
-     cout << "[INFO] Server running on port: " << port << endl;
-     cout << "[INFO] Access the server at: http://" << ipAddress << ":" << port << endl;
-     cout << "[INFO] Waiting for client connections...\n" << endl;
+     cout << "Server running on IP: " << ipAddress << endl;
+     cout << "Server running on port: " << port << endl;
+     cout << "Access the server at: http://" << ipAddress << ":" << port << endl;
+     cout << "Waiting for client connections...\n" << endl;
  
      // Infinite loop to accept client connections
      while (true) {
