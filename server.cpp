@@ -10,6 +10,7 @@
  #include <string>
  #include <cstring>
  #include <thread> 
+ #include <netdb.h>  // Required for gethostbyname()
  #include <netinet/in.h> //Socket address structures
  #include <unistd.h> //System calls (read, write, close)
  #include <sys/socket.h> //Socket functions
@@ -19,6 +20,29 @@
  
  #define BUFFER_SIZE 4096
  
+// Function to get the server's IP address
+string getServerIPAddress() {
+    char hostbuffer[256];
+    struct hostent *host_entry;
+    
+    // Get the hostname of the system
+    if (gethostname(hostbuffer, sizeof(hostbuffer)) == -1) {
+        perror("gethostname");
+        return "Unknown";
+    }
+
+    // Get host information
+    host_entry = gethostbyname(hostbuffer);
+    if (!host_entry) {
+        perror("gethostbyname");
+        return "Unknown";
+    }
+
+    // Convert to IP address string
+    return inet_ntoa(*((struct in_addr*)host_entry->h_addr_list[0]));
+}
+
+
  //Function on HTTP response
  string getHTTPResponse(const string &status, const string &contentType, const string &body){
  
@@ -161,7 +185,7 @@
  
      int selectedPort = generateRandomPort(); //Generate a random port number
      tcp_server_address.sin_port = htons(selectedPort); //Convert the port number to network byte order
-     cout << "Server assigned to port: " << selectedPort << endl;
+     
  
      //Binding of server socket
      if(bind(tcp_server_socket, (struct sockaddr*)&tcp_server_address, sizeof(tcp_server_address)) < 0){
@@ -185,7 +209,7 @@
      // cout << buffer; //Should output necessary information from server to make it verbose.
  
      cout << "Server running on port: " << selectedPort << endl;
-     cout << "Input in URL: http://localhost:" << selectedPort << endl;
+        cout << "Server IP Address: " << getServerIPAddress() << endl;
      cout << "Note: press Ctrl + C to stop the server" << endl;
      cout << "Waiting for incoming connections..." << endl;
  
