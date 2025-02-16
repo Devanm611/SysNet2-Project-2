@@ -1,5 +1,5 @@
 /*
- * Project1 - HTTP Server
+ * Project 2 - HTTP Server (Verbose Mode)
  * COP4635 System & Networks 2
  * Team Members: Devan Rivera, Ashley Villegas
  */
@@ -9,232 +9,188 @@
  #include <sstream>
  #include <string>
  #include <cstring>
- #include <thread> 
- #include <netdb.h>  // Required for gethostbyname()
- #include <netinet/in.h> //Socket address structures
- #include <unistd.h> //System calls (read, write, close)
- #include <sys/socket.h> //Socket functions
- #include <arpa/inet.h> //IP address function
+ #include <thread>
+ #include <netinet/in.h> // Socket structures
+ #include <unistd.h>     // System calls: read, write, close
+ #include <sys/socket.h> // Socket functions
+ #include <arpa/inet.h>  // IP address functions
+ #include <netdb.h>      // Hostname resolution functions
  
  using namespace std;
  
  #define BUFFER_SIZE 4096
  
-// Function to get the server's IP address
-string getServerIPAddress() {
-    char hostbuffer[256];
-    struct hostent *host_entry;
-    
-    // Get the hostname of the system
-    if (gethostname(hostbuffer, sizeof(hostbuffer)) == -1) {
-        perror("gethostname");
-        return "Unknown";
-    }
+ // Function to get the server's IP address
+ string getServerIPAddress() {
 
-    // Get host information
-    host_entry = gethostbyname(hostbuffer);
-    if (!host_entry) {
-        perror("gethostbyname");
-        return "Unknown";
-    }
-
-    // Convert to IP address string
-    return inet_ntoa(*((struct in_addr*)host_entry->h_addr_list[0]));
-}
-
-
- //Function on HTTP response
- string getHTTPResponse(const string &status, const string &contentType, const string &body){
+    // Get the hostname
+     char hostbuffer[256];
+     struct hostent *host_entry;
  
+     // Retrieve the hostname
+     if (gethostname(hostbuffer, sizeof(hostbuffer)) == -1) {
+         perror("gethostname");
+         return "Unknown";
+     }
+ 
+     // Get the host information
+     host_entry = gethostbyname(hostbuffer);
+     if (!host_entry) {
+         perror("gethostbyname");
+         return "Unknown";
+     }
+ 
+     return inet_ntoa(*((struct in_addr*)host_entry->h_addr_list[0]));
+ }
+ 
+ // Function to construct an HTTP response
+ string getHTTPResponse(const string &status, const string &contentType, const string &body) {
      ostringstream HTTPResponse;
      HTTPResponse << "HTTP/1.1 " << status << "\r\n";
-     HTTPResponse << "Content Type: " << contentType << "\r\n";
-     HTTPResponse << "Content Length: " << body.size() << "\r\n";
+     HTTPResponse << "Content-Type: " << contentType << "\r\n";
+     HTTPResponse << "Content-Length: " << body.size() << "\r\n";
      HTTPResponse << "Connection: close\r\n\r\n";
      HTTPResponse << body;
      return HTTPResponse.str();
+ }
+ 
+ // Function to determine Content-Type based on file extension
+ string getContentHTTP(const string &filePath) {
+     if (filePath.rfind(".html") != string::npos && filePath.rfind(".html") == filePath.size() - 5) return "text/html";
      
- }
- 
- 
- //Content of the HTTP response
- string getContentHTTP(const string &filePath){
- 
-     if(filePath.rfind(".html") != string::npos && filePath.rfind(".html") == filePath.size() - 5){
-         return "text/html";
-     }
- 
-      if(filePath.rfind(".jpg") != string::npos && filePath.rfind(".jpg") == filePath.size() - 4){
-         return "image/jpeg";
-     }
- 
-     if(filePath.rfind(".jpeg") != string::npos && filePath.rfind(".jpeg") == filePath.size() - 5){
-         return "image/jpeg";
-     }
- 
-     if(filePath.rfind(".png") != string::npos && filePath.rfind(".png") == filePath.size() - 4){
-         return "image/png";
-     }
- 
+     if (filePath.rfind(".jpg") != string::npos && filePath.rfind(".jpg") == filePath.size() - 4) return "image/jpeg";
+     
+     if (filePath.rfind(".jpeg") != string::npos && filePath.rfind(".jpeg") == filePath.size() - 5) return "image/jpeg";
+    
+     if (filePath.rfind(".png") != string::npos && filePath.rfind(".png") == filePath.size() - 4) return "image/png";
+     
      return "text/plain";
- 
  }
  
- //Function to get the file content
+ // Function to read file content
  string getFileContent(const string &filePath) {
      ifstream file(filePath, ios::in | ios::binary);
-     if(file){
+     if (file) {
          ostringstream content;
          content << file.rdbuf();
          file.close();
          return content.str();
-     } 
-     else{
-         return "";
      }
+     return "";
  }
  
- //Function to handle the client's connection
- void handleClient(int clientSocket){
-     
+ // Function to handle client requests (Verbose)
+ void handleClient(int clientSocket) {
      char buffer[BUFFER_SIZE];
-     read(clientSocket, buffer, BUFFER_SIZE); //Reading client request
+     int bytesRead = read(clientSocket, buffer, BUFFER_SIZE - 1);
+     
+     // Check if the request is valid
+     if (bytesRead <= 0) {
+         cerr << "[ERROR] Failed to read request or client disconnected." << endl;
+         close(clientSocket);
+         return;
+     }
+ 
+     
+     buffer[bytesRead] = '\0'; // Null-terminate the request data
+     cout << "\n[INFO] Received Request:\n" << buffer << endl;
  
      istringstream request(buffer);
-     string method;
-     string path;
-     string protocol;
- 
+     string method, path, protocol;
      request >> method >> path >> protocol;
  
-     if(path == "/"){
+     // Check if the request is valid
+     if (path == "/") path = "index.html";
+     else path = path.substr(1);
  
-         path = "index.html";
+     cout << "[INFO] Client requested: " << path << endl;
  
-     }
-     else{
-         
-         path = path.substr(1);
-     }
- 
-     if(method == "GET"){
- 
-         ifstream file(path, ios::in | ios::binary);
- 
-         if(file){
- 
-             ostringstream body;
-             body << file.rdbuf();
-             file.close();
- 
-             string response = getHTTPResponse("200 OK", getContentHTTP(path), body.str());
-             write(clientSocket, response.c_str(), response.size());
- 
+     string response;
+     if (method == "GET") {
+         string fileContent = getFileContent(path);
+         if (!fileContent.empty()) { // File found
+
+             response = getHTTPResponse("200 OK", getContentHTTP(path), fileContent);
+             cout << "[INFO] Response: 200 OK (" << getContentHTTP(path) << ")" << endl;
+         } else { // File not found
+
+             response = getHTTPResponse("404 Not Found", "text/html", "<h1>404 Not Found</h1>");
+             cout << "[INFO] Response: 404 Not Found" << endl;
          }
-         else{
- 
-             string response = getHTTPResponse("404 Not Found", "text/html", "<h1>404 Not Found</h1>");
-             write(clientSocket, response.c_str(), response.size());
- 
-         }
- 
-     }
-     else{
- 
-         string response = getHTTPResponse("400 Bad Request", "text/html", "<h1>400 Bad Request</h1>");
-         write(clientSocket, response.c_str(), response.size());
- 
+     } else { // Invalid request method
+
+         response = getHTTPResponse("400 Bad Request", "text/html", "<h1>400 Bad Request</h1>");
+         cout << "[INFO] Response: 400 Bad Request" << endl;
      }
  
+     // Send the response back to the client
+     write(clientSocket, response.c_str(), response.size());
      close(clientSocket);
- 
+     cout << "[INFO] Connection closed with client." << endl;
  }
  
- //Generate a random port number
- int generateRandomPort(){
- 
-     srand(time(0)); //Seed the random number generator
-     return  60001 + (rand() % 99) ; //Random port number between 6001 and 6099
- 
+ // Function to generate a random port
+ int generatePort() {
+     srand(time(NULL));
+     return 60001 + (rand() % 99);
  }
  
- int main(int argc, char *argv[]){
- 
-     int tcp_server_socket;
-     int clientSocket;
- 
-     struct sockaddr_in tcp_server_address, clientAddr;
-     socklen_t addrLen = sizeof(clientAddr);
- 
-     cout << "Server starting..." << endl;
- 
-     //Create the Socket
-     tcp_server_socket = socket(AF_INET, SOCK_STREAM, 0);
-     if(tcp_server_socket < 0){
- 
+ // Main function
+ int main() {
+    
+    // Create a socket
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+     if (serverSocket < 0) {
          perror("Socket creation failed");
          exit(EXIT_FAILURE);
- 
      }
-     cout << "Socket created successfully!" << endl;
  
-     //Address server tructure and bind the socket
-     memset(&tcp_server_address, 0, sizeof(tcp_server_address));
-     tcp_server_address.sin_family = AF_INET; 
-     tcp_server_address.sin_addr.s_addr = INADDR_ANY;   //Accept connections from any IP address
+     // Set server address
+     struct sockaddr_in serverAddr;
+     memset(&serverAddr, 0, sizeof(serverAddr));
+     serverAddr.sin_family = AF_INET;
+     serverAddr.sin_addr.s_addr = INADDR_ANY;
+     int port = generatePort();
+     serverAddr.sin_port = htons(port);
  
-     int selectedPort = generateRandomPort(); //Generate a random port number
-     tcp_server_address.sin_port = htons(selectedPort); //Convert the port number to network byte order
-     
- 
-     //Binding of server socket
-     if(bind(tcp_server_socket, (struct sockaddr*)&tcp_server_address, sizeof(tcp_server_address)) < 0){
- 
-         perror("Socket bind() failed..."); //Print an error message if bind fails
-         close(tcp_server_socket); 
+     // Bind the socket to the server address
+     if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+         perror("Bind failed");
+         close(serverSocket);
          exit(EXIT_FAILURE);
- 
      }
-     cout << "Socket bind successful! Port: " << selectedPort << endl;
  
-     //Listen for incoming connections
-     if(listen(tcp_server_socket, 10) < 0){
- 
-         perror("Socket listen() failed..."); //Print an error message if listen fails
-         close(tcp_server_socket); 
+     // Listen for incoming connections
+     if (listen(serverSocket, 10) < 0) {
+         perror("Listen failed");
+         close(serverSocket);
          exit(EXIT_FAILURE);
- 
      }
  
-     // cout << buffer; //Should output necessary information from server to make it verbose.
+     // Print server information
+     string ipAddress = getServerIPAddress();
+     cout << "[INFO] Server running on IP: " << ipAddress << endl;
+     cout << "[INFO] Server running on port: " << port << endl;
+     cout << "[INFO] Access the server at: http://" << ipAddress << ":" << port << endl;
+     cout << "[INFO] Waiting for client connections...\n" << endl;
  
-     cout << "Server running on port: " << selectedPort << endl;
-        cout << "Server IP Address: " << getServerIPAddress() << endl;
-     cout << "Note: press Ctrl + C to stop the server" << endl;
-     cout << "Waiting for incoming connections..." << endl;
- 
-     //Accept incoming connections
-     while(true){
- 
-         clientSocket = accept(tcp_server_socket, (struct sockaddr*)&clientAddr, &addrLen);
-         
-         if(clientSocket < 0){
- 
-             perror("Socket accept() failed..."); //Print an error message if accept fails
-             close(tcp_server_socket);
-             exit(EXIT_FAILURE);
- 
+     // Accept client connections
+     while (true) {
+         struct sockaddr_in clientAddr;
+         socklen_t clientLen = sizeof(clientAddr);
+         int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
+         if (clientSocket < 0) {
+             perror("[ERROR] Accept failed");
+             continue;
          }
-         else{
  
-             cout << "Client connected: " << inet_ntoa(clientAddr.sin_addr) << endl; 
-             thread clientThread(handleClient, clientSocket);
-             clientThread.detach(); // Detach the thread to handle the client independently
-         
-         }
+         // Handle client requests in a separate thread
+         cout << "[INFO] Client connected from: " << inet_ntoa(clientAddr.sin_addr) << endl;
+         thread t(handleClient, clientSocket);
+         t.detach();
      }
  
-     close(tcp_server_socket);
-     
+     close(serverSocket);
      return 0;
  }
+ 

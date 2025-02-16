@@ -1,96 +1,88 @@
-/*
- * Project2 - HTTP Client
- * COP4635 System & Networks 2
- * Team Members: Devan Rivera, Ashley Villegas
- */
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <cstring>
+#include <cstdlib>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
- #include <iostream>
- #include <fstream>
- #include <sstream>
- #include <string>
- #include <cstring>
- #include <thread> 
- #include <netinet/in.h> //Socket address structures
- #include <unistd.h> //System calls (read, write, close)
- #include <sys/socket.h> //API and definitions for the sockets
- #include <sys/types.h>  //more definitions
- #include <netinet/in.h> //Structures to store address information
- #include <arpa/inet.h> //IP address function
+using namespace std;
 
- #define BUFFER_SIZE 4096 
+#define BUFFER_SIZE 4096
 
- using namespace std;
+int main(int argc, char* argv[]) { 
 
-//Basic TCP Client: socket() creation > connect() > receive() > display > close
-
-int main(int argc, char* argv[]){
-
-    if(argc < 3){   //The client expects two arguments (IP and Port #)
-
-        cerr << "Usage: " << argv[0] << " <IP> <Port #>" << endl;   
-
+    if (argc < 3) {// Check if the user provided the server IP and port
+        cerr << "Usage: " << argv[0] << " <Server IP> <Server Port>" << endl;
         return 1;
     }
 
     string serverIP = argv[1];
     int serverPort = atoi(argv[2]);
 
-    //creating the TCP socket
-    int tcp_client_socket;                                    //Socket descriptor
-    tcp_client_socket = socket(AF_INET, SOCK_STREAM, 0);      //Calling the socket function - args: socket domain, socket stream type, TCP protocol (default)
+    cout << "Connecting to server at IP: " << serverIP << " on port: " << serverPort << endl;
 
-    if(tcp_client_socket < 0){
-     
-        perror("Socket creation failed");   
-        exit(EXIT_FAILURE);
+    while (true) {
 
-    }    
+        // Create a new socket for each request
+        int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-    //specify address and port of the remote socket
-    struct sockaddr_in tcp_server_address;             //declaring a structure for the address
-    tcp_server_address.sin_family = AF_INET;           //Structure Fields' definition: Sets the address family of the address the client would connect to
-    tcp_server_address.sin_port = htons(serverPort);  //Specify and pass the port number to connect - converting in right network byte order
-    tcp_server_address.sin_addr.s_addr = INADDR_ANY;   //Connecting to 0.0.0.0
+        if (clientSocket < 0) {
+           
+            perror("Socket creation failed");
+            exit(EXIT_FAILURE);
+        }
 
-    if(inet_pton(AF_INET, serverIP.c_str(), &tcp_server_address.sin_addr) <= 0){   //Converts the IP address from text to binary form
-        
-        cerr << "Invalid IP Address" << endl;
-        close(tcp_client_socket);
+        // Set server address
+        struct sockaddr_in serverAddr;
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_port = htons(serverPort);
 
-        return 1;
+        if (inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr) <= 0) {// Convert IP address to binary form
+            
+            cerr << "Invalid IP Address" << endl;
+            close(clientSocket);
+            return 1;
+        }
+
+        if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) { // Connect to the server
+            
+            perror("Connection failed");
+            close(clientSocket);
+            return 1;
+        }
+
+        cout << "Connected to the server!" << endl;
+
+        string fileName;
+        cout << "Enter the filename to request (or type 'exit' to quit): ";
+        getline(cin, fileName);
+
+        if (fileName == "exit") { 
+            cout << "Exiting client..." << endl;
+            close(clientSocket);
+            break; // Exit the loop when user types 'exit'
+        }
+
+        // Send the request to the server
+        string request = "GET /" + fileName + " HTTP/1.1\r\nHost: " + serverIP + ":" + to_string(serverPort) + "\r\nConnection: close\r\n\r\n";
+        send(clientSocket, request.c_str(), request.size(), 0);
+
+        // Receive the response from the server
+        char buffer[BUFFER_SIZE];
+        int bytesReceived;
+        cout << "\n--- Response from Server ---\n";
+
+        while ((bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE - 1, 0)) > 0) { // Receive data until there is no more data to read
+            buffer[bytesReceived] = '\0';
+            cout << buffer;
+        }
+        cout << "\n--- End of Response ---\n";
+
+        // Close the connection before making another request
+        close(clientSocket);
     }
-
-    //connecting to the remote socket using information provided from server
-    int connection_status = connect(tcp_client_socket, (struct sockaddr *) &tcp_server_address, sizeof(tcp_server_address));     //params: which socket, cast for address to the specific structure type, size of address
-    if (connection_status == -1){ 
-                                                                                                //return value of 0 means all okay, -1 means a problem
-        printf(" Problem connecting to the socket! Sorry!! \n");
-        close(tcp_client_socket);
-
-    }
-    else{
-
-        printf("Connected to the server! \n");
-
-    }
-
-    //Sends a complete HTTP request
-    ostringstream http_request;   //Creating a string stream to build the HTTP GET request
-    http_request << "GET / HTTP/1.1" << endl;   //HTTP request line
-    http_request << "Host: " << serverIP << ":" << serverPort << endl;   //Host header
-    http_request << "Connection: close" << endl;   //Closes the connection
-    string request = http_request.str();   //Convert the string stream to a string
-
-
-
-    char tcp_server_response[256];
-    recv(tcp_client_socket, &tcp_server_response, sizeof(tcp_server_response), 0);   // params: where (socket), what (string), how much - size of the server response, flags (0)
-
-    //Output, as received from Server
-    printf("\n\n Server says: %s \n", tcp_server_response);
-
-    //closing the socket
-    close(tcp_client_socket);
 
     return 0;
 }
