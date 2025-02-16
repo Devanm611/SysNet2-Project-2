@@ -94,17 +94,3 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
-
-/*
-        Devan Rivera 2/14/2025
-        Cloned the previous Repository to utilize the server.cpp file
-        Utilized the code from the TCP Client example and built 
-        upon the princple of creating a client.
-        Implemented the socket creation, connection, and request 
-        of Http response.
-
-        2/15/2025
-        
-        2/16/2025
-
-*/
