@@ -90,7 +90,7 @@
              imageFile.write(buffer, bytes_received);
          }
          imageFile.close();
-         cout << " Image file saved successfully." << endl;
+         cout << "Image file saved successfully." << endl;
      }
  
      // Print additional text if needed
