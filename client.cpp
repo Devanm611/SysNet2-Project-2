@@ -22,12 +22,12 @@
  void saveBinaryFile(const string &filename, const char *data, int size) {
      ofstream file(filename, ios::binary);
      if (!file) {
-         cerr << "[ERROR] Could not create file " << filename << endl;
+         cerr << "Could not create file " << filename << endl;
          return;
      }
      file.write(data, size);
      file.close();
-     cout << "[INFO] Image saved as " << filename << endl;
+     cout << "Image saved as " << filename << endl;
  }
  
  // Function to process server responses
@@ -75,7 +75,7 @@
                  }
                  // Write remaining data after headers
                  imageFile.write(buffer + headerEnd + 4, bytes_received - headerEnd - 4);
-                 cout << "[INFO] Image saved as " << filename << endl;
+                 cout << "Image saved as " << filename << endl;
              } 
              else if (contentType.find("text") != string::npos) { 
                  isText = true;
@@ -91,7 +91,7 @@
              imageFile.write(buffer, bytes_received);
          }
          imageFile.close();
-         cout << "[INFO] Image file saved successfully." << endl;
+         cout << " Image file saved successfully." << endl;
      }
  
      // Print additional text if needed
