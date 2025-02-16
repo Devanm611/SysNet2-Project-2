@@ -10,40 +10,39 @@
  #include <string>
  #include <cstring>
  #include <cstdlib>
- #include <unistd.h>       // System calls: close()
- #include <arpa/inet.h>    // IP address functions
- #include <sys/socket.h>   // Socket functions
+ #include <unistd.h>      // System calls: close
+ #include <arpa/inet.h>   // IP address functions
+ #include <sys/socket.h>  // Socket functions
  
  using namespace std;
  
- #define BUFFER_SIZE 4096  // Buffer size for reading data from the server
+ #define BUFFER_SIZE 4096
  
- // Function to save binary file (for images)
- void saveBinaryFile(const string &filename, const char *data, size_t size) {
+ // Function to save an image file received from the server
+ void saveBinaryFile(const string &filename, const char *data, int size) {
      ofstream file(filename, ios::binary);
      if (!file) {
-         cerr << "[ERROR] Could not save file: " << filename << endl;
+         cerr << "[ERROR] Could not create file " << filename << endl;
          return;
      }
      file.write(data, size);
      file.close();
-     cout << "[INFO] Image saved as: " << filename << endl;
+     cout << "[INFO] Image saved as " << filename << endl;
  }
  
- // Function to handle and process HTTP responses
- void processHttpResponse(int clientSocket) {
+ // Function to process server responses
+ void processHttpResponse(int sockfd) {
      char buffer[BUFFER_SIZE];
      string response;
-     int bytesReceived;
-     bool isImage = false;
+     int bytes_received;
      string contentType;
-     size_t contentLength = 0;
+     bool isImage = false;
+     bool isText = false;
      ofstream imageFile;
  
      // Read response from the server
-     while ((bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE - 1, 0)) > 0) {
-         buffer[bytesReceived] = '\0';
-         response += buffer;
+     while ((bytes_received = recv(sockfd, buffer, BUFFER_SIZE, 0)) > 0) {
+         response.append(buffer, bytes_received);
  
          // Look for end of HTTP headers
          size_t headerEnd = response.find("\r\n\r\n");
@@ -51,41 +50,36 @@
              string headers = response.substr(0, headerEnd);
              cout << "\n--- HTTP Headers ---\n" << headers << "\n";
  
-             // Detect if response is an image
-             if (headers.find("Content-Type: image") != string::npos) {
+             // Detect Content-Type
+             size_t typePos = headers.find("Content-Type: ");
+             if (typePos != string::npos) {
+                 contentType = headers.substr(typePos + 14);
+                 contentType = contentType.substr(0, contentType.find("\r"));
+             }
+ 
+             // Check if it's an image or text
+             if (contentType.find("image") != string::npos) {
                  isImage = true;
- 
-                 // Extract Content-Length (if present)
-                 size_t lengthPos = headers.find("Content-Length: ");
-                 if (lengthPos != string::npos) {
-                     stringstream ss(headers.substr(lengthPos + 16));
-                     ss >> contentLength;
-                 }
- 
-                 // Extract content type
-                 size_t typePos = headers.find("Content-Type: ");
-                 if (typePos != string::npos) {
-                     contentType = headers.substr(typePos + 14);
-                     contentType = contentType.substr(0, contentType.find("\r"));
-                 }
- 
-                 // Save image data
                  string filename = "downloaded_image";
+ 
+                 // Determine the file extension
                  if (contentType.find("jpeg") != string::npos) filename += ".jpg";
                  else if (contentType.find("png") != string::npos) filename += ".png";
+                 else if (contentType.find("gif") != string::npos) filename += ".gif";
  
+                 // Open file for writing
                  imageFile.open(filename, ios::binary);
                  if (!imageFile) {
-                     cerr << "Could not create file: " << filename << endl;
+                     cerr << "[ERROR] Could not create file: " << filename << endl;
                      return;
                  }
- 
                  // Write remaining data after headers
-                 imageFile.write(buffer + headerEnd + 4, bytesReceived - headerEnd - 4);
-             } else {
-                 // If not an image, print the response body
-                 cout << "\n--- HTTP Body ---\n" << response.substr(headerEnd + 4) << "\n";
-                 return;
+                 imageFile.write(buffer + headerEnd + 4, bytes_received - headerEnd - 4);
+                 cout << "[INFO] Image saved as " << filename << endl;
+             } 
+             else if (contentType.find("text") != string::npos) { 
+                 isText = true;
+                 cout << "\n--- HTML Response Body ---\n" << response.substr(headerEnd + 4) << endl;
              }
              break;
          }
@@ -93,16 +87,25 @@
  
      // If it's an image, continue receiving the rest of the binary data
      if (isImage) {
-         while ((bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0)) > 0) {
-             imageFile.write(buffer, bytesReceived);
+         while ((bytes_received = recv(sockfd, buffer, BUFFER_SIZE, 0)) > 0) {
+             imageFile.write(buffer, bytes_received);
          }
          imageFile.close();
-         cout << "Image file saved successfully." << endl;
+         cout << "[INFO] Image file saved successfully." << endl;
+     }
+ 
+     // Print additional text if needed
+     if (isText) {
+         while ((bytes_received = recv(sockfd, buffer, BUFFER_SIZE - 1, 0)) > 0) {
+             buffer[bytes_received] = '\0';
+             cout << buffer;
+         }
+         cout << "\n--- End of HTML Response ---\n";
      }
  }
  
  int main(int argc, char* argv[]) { 
-     if (argc < 3) {
+     if (argc < 3) { // Check if the user provided the server IP and port
          cerr << "Usage: " << argv[0] << " <Server IP> <Server Port>" << endl;
          return 1;
      }
@@ -113,7 +116,7 @@
      cout << "Connecting to server at IP: " << serverIP << " on port: " << serverPort << endl;
  
      while (true) {
-         // Create socket
+         // Create a new socket for each request
          int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
          if (clientSocket < 0) {
              perror("Socket creation failed");
@@ -125,14 +128,13 @@
          serverAddr.sin_family = AF_INET;
          serverAddr.sin_port = htons(serverPort);
  
-         if (inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr) <= 0) {
+         if (inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr) <= 0) { // Convert IP address to binary form
              cerr << "Invalid IP Address" << endl;
              close(clientSocket);
              return 1;
          }
  
-         // Connect to the server
-         if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+         if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) { // Connect to the server
              perror("Connection failed");
              close(clientSocket);
              return 1;
@@ -140,7 +142,6 @@
  
          cout << "Connected to the server!" << endl;
  
-         // Prompt user for file request
          string fileName;
          cout << "Enter the filename to request (or type 'exit' to quit): ";
          getline(cin, fileName);
@@ -148,14 +149,14 @@
          if (fileName == "exit") { 
              cout << "Exiting client..." << endl;
              close(clientSocket);
-             break;  // Exit the loop
+             break; // Exit the loop when user types 'exit'
          }
  
-         // Construct the GET request
+         // Send the request to the server
          string request = "GET /" + fileName + " HTTP/1.1\r\nHost: " + serverIP + ":" + to_string(serverPort) + "\r\nConnection: close\r\n\r\n";
          send(clientSocket, request.c_str(), request.size(), 0);
  
-         // Process server response
+         // Process the server response
          processHttpResponse(clientSocket);
  
          // Close the connection before making another request
@@ -164,3 +165,4 @@
  
      return 0;
  }
+ 
