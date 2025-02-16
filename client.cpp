@@ -1,11 +1,17 @@
+/*
+ * Project 2 - HTTP Client
+ * COP4635 System & Networks 2
+ * Team Members: Devan Rivera, Ashley Villegas
+ */
+
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <cstring>
 #include <cstdlib>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
+#include <unistd.h> // System calls: close
+#include <arpa/inet.h> // IP address functions
+#include <sys/socket.h> // Socket functions
 
 using namespace std;
 

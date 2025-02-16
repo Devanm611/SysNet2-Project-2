@@ -1,5 +1,5 @@
 /*
- * Project 2 - HTTP Server (Verbose Mode)
+ * Project 2 - HTTP Client
  * COP4635 System & Networks 2
  * Team Members: Devan Rivera, Ashley Villegas
  */
