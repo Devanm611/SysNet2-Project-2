@@ -29,16 +29,17 @@ Make sure the following files are included in your project directory:
 Step 1: Open 2 seperate WSL: Ubuntu terminals 
 
 Step 2: In both terminals compile the makefile
-        Command: make
+
+        ~ Command: make
 
         ~ If there are any errors, 
           Run: make clean and rerun make
 
 Step 3: Once compiled run the server executable in the first terminal
-        Executable: ./httpServer 
+        ~ Executable: ./httpServer 
 
 Step 4: In the second terminal run the client executable
-        Executable: ./httpClient
+        ~ Executable: ./httpClient
 
 Step 5:
 
@@ -52,16 +53,16 @@ Step 6: Once your done, to stop the server and client press Ctrl + C
 Step 1: Open 2 seperate SSH terminals
 
 Step 2: compile the makefile in both terminals
-        Command: make
+        ~ Command: make
 
         ~ If there are any errors, 
           Run: make clean and rerun make
 
 Step 3: Once compiled run the server executable in the first terminal
-        Executable: ./httpServer
+        ~ Executable: ./httpServer
 
 Step 4: In the second terminal run the client executable
-        Executable: ./httpClient
+        ~ Executable: ./httpClient
 
 Step 5: Once your done, to stop the server and client press Ctrl + C 
         in the terminals where they are respectively running
