@@ -60,7 +60,7 @@
              // Check if it's an image or text
              if (contentType.find("image") != string::npos) {
                  isImage = true;
-                 string filename = "downloaded_image";
+                 string filename = "NewSaveimageData";
  
                  // Determine the file extension
                  if (contentType.find("jpeg") != string::npos) filename += ".jpg";
@@ -70,7 +70,7 @@
                  // Open file for writing
                  imageFile.open(filename, ios::binary);
                  if (!imageFile) {
-                     cerr << "[ERROR] Could not create file: " << filename << endl;
+                     cerr << "Could not create file: " << filename << endl;
                      return;
                  }
                  // Write remaining data after headers
