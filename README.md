@@ -44,12 +44,12 @@ Step 3: Once compiled, run the server executable in the terminal
         Note: It will provide you a Server IP and port number
 
 Step 4: In the second terminal, go to your directory where all your files and executables are   
-        located and run the client executable includinfg the IP and port number of the server.
+        located and run the client executable including the IP and port number of the server.
         ~ Executable: ./httpClient <Server_IP> <Server_PORT #>
 
         ~ Example: ./httpClient 127.0.1.1 60016
 
-Step 5: Where the client is beind executed it will ask the user to "Enter the filename to request
+Step 5: Where the client is being executed it will ask the user to "Enter the filename to request
         (or type 'exit' to quit)" which from there the user can enter the provided files to test
         the program.
 
