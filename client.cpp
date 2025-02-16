@@ -63,7 +63,7 @@ int main(int argc, char* argv[]){
     //connecting to the remote socket using information provided from server
     int connection_status = connect(tcp_client_socket, (struct sockaddr *) &tcp_server_address, sizeof(tcp_server_address));     //params: which socket, cast for address to the specific structure type, size of address
     if (connection_status == -1){ 
-                                                                                                //return value of 0 means all okay, -1 means a problem
+     //return value of 0 means all okay, -1 means a problem
         printf(" Problem connecting to the socket! Sorry!! \n");
         close(tcp_client_socket);
 
