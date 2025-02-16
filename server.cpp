@@ -182,7 +182,7 @@ int main(int argc, char *argv[]){
 
     }
 
-    cout << buffer; //Should output necessary information from server to make it verbose.
+    // cout << buffer; //Should output necessary information from server to make it verbose.
 
     cout << "Server running on port: " << selectedPort << endl;
     cout << "Input in URL: http://localhost:" << selectedPort << endl;

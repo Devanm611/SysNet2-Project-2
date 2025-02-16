@@ -23,7 +23,7 @@
 
 //Basic TCP Client: socket() creation > connect() > receive() > display > close
 
-int main(int agrc, char* argv[]){
+int main(int argc, char* argv[]){
 
     if(argc < 3){   //The client expects two arguments (IP and Port #)
 
@@ -49,7 +49,7 @@ int main(int agrc, char* argv[]){
     //specify address and port of the remote socket
     struct sockaddr_in tcp_server_address;             //declaring a structure for the address
     tcp_server_address.sin_family = AF_INET;           //Structure Fields' definition: Sets the address family of the address the client would connect to
-    tcp_server_address.sin_port = htons(port);        //Specify and pass the port number to connect - converting in right network byte order
+    tcp_server_address.sin_port = htons(serverPort);  //Specify and pass the port number to connect - converting in right network byte order
     tcp_server_address.sin_addr.s_addr = INADDR_ANY;   //Connecting to 0.0.0.0
 
     if(inet_pton(AF_INET, serverIP.c_str(), &tcp_server_address.sin_addr) <= 0){   //Converts the IP address from text to binary form
